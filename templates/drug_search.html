@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Medicine Search</h1>
+
+<form method="get" action="{% url 'drug_search' %}">
+  <input type="text" id="drug-input" name="q" value="{{ query }}" placeholder="Enter drug name">
+  <button type="submit">Search</button>
+  <ul id="suggestions" style="border:1px solid #ccc;position:absolute;background:#fff;"></ul>
+</form>
+
+{% if drug_info %}
+  <h2>{{ drug_info.title }}</h2>
+  <p><b>{{ drug_info.description }}</b></p>
+  <p>{{ drug_info.extract }}</p>
+  {% if drug_info.thumbnail %}
+    <img src="{{ drug_info.thumbnail }}" alt="{{ drug_info.title }}">
+  {% endif %}
+{% endif %}
+
+<script>
+document.getElementById("drug-input").addEventListener("input", function() {
+  let query = this.value;
+  if (query.length < 2) return;
+
+  fetch(`/drug-suggestions/?term=${query}`)
+    .then(resp => resp.json())
+    .then(data => {
+      let list = document.getElementById("suggestions");
+      list.innerHTML = "";
+      data.forEach(item => {
+        let li = document.createElement("li");
+        li.textContent = item;
+        li.style.cursor = "pointer";
+        li.onclick = () => {
+          document.getElementById("drug-input").value = item;
+          list.innerHTML = "";
+        };
+        list.appendChild(li);
+      });
+    });
+});
+</script>
+
+
+{% endblock %}

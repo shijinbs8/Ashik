@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block active %}active{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2 class="text-center">Add New Customer</h2>
+
+    <form method="post" class="shadow p-4 bg-white rounded" action="{% url 'add_customer' %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Customer Name:</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Bank Account:</label>
+            <div class="input-group">
+                <select name="bank_account" id="bank_account" class="form-select" required>
+                    {% for bank in bank_accounts %}
+                        <option value="{{ bank.id }}">{{ bank.bank_name }} - {{ bank.account_number }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#bankModal">+</button>
+            </div>
+        </div>
+        
+
+        <div class="row">
+            <div class="col-md-6">
+                <label class="form-label">PIN Code:</label>
+                <input type="text" name="pin_code" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Credit Limit:</label>
+                <input type="number" name="credit_limit" class="form-control" step="0.01" required>
+            </div>
+
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="form-label">Credit Period (Days):</label>
+                <input type="number" name="credit_period" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Salesman:</label>
+                <select name="salesman" class="form-select" >
+                    {% for salesman in salesmen %}
+                        <option value="{{ salesman.id }}">{{ salesman.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="mb-3 mt-3">
+        <div class="form-group">
+            <label class="form-label">Address</label>
+            <textarea class="form-control" name="address" rows="5"></textarea>
+        </div>
+      </div>
+        <div class="mb-3 mt-3">
+            <label class="form-label">Area:</label>
+            <input type="text" name="area" class="form-control" required>
+        </div>
+
+        
+
+        <div class="mb-3">
+            <label class="form-label">Route:</label>
+            <input type="text" name="route" class="form-control" required>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">District:</label>
+                <input type="text" name="district" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">State:</label>
+                <input type="text" name="state" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Country:</label>
+                <input type="text" name="country" class="form-control" value="India" readonly>
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="form-label">TIN No:</label>
+                <input type="text" name="tin_no" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">GSTIN:</label>
+                <input type="text" name="gstin" class="form-control">
+            </div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-md-6">
+                <label class="form-label">Contact Number:</label>
+                <input type="text" name="contact" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Email:</label>
+                <input type="email" name="email" class="form-control">
+            </div>
+        </div>
+
+        <div class="mb-3 mt-3">
+            <label class="form-label">Contact Person:</label>
+            <input type="text" name="contact_person" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">DL No:</label>
+            <input type="text" name="dl_no" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Active:</label>
+            <select name="active" class="form-select">
+                <option value="true" selected>Yes</option>
+                <option value="false">No</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100 mt-4">Add Customer</button>
+    </form>
+</div>
+<br>
+<!-- Bank Details Modal -->
+
+<div class="modal fade" id="bankModal" tabindex="-1" aria-labelledby="bankModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bankModalLabel">Add Bank Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+          
+            <div class="modal-body">
+                <form method="post" action="{% url 'add_bank_account' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Bank Name:</label>
+                        <input type="text" name="bank_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Account Number:</label>
+                        <input type="text" name="account_number" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Beneficiary Name:</label>
+                        <input type="text" name="beneficiary_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">IFSC Code:</label>
+                        <input type="text" name="ifsc_code" class="form-control" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Submit</button>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+    var message = "{{ messages|join:' ' }}";
+    if (message) {
+        Swal.fire({
+            title: "Notification",
+            text: message,
+            icon: "info"
+        });
+    }
+});
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Sales Report</h2>
+<br>
+
+<!-- Filter Card -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <div class="header-title">
+            <h4 class="card-title">Sales Report</h4>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="GET">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Start Date:</label>
+                    <input type="date" class="form-control" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label>End Date:</label>
+                    <input type="date" class="form-control" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label>Supplier:</label>
+                    <select class="form-control" name="supplier">
+                        <option value="">Select Supplier</option>
+                        {% for supplier in suppliers %}
+                            <option value="{{ supplier.id }}" {% if selected_supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                                {{ supplier.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Customer:</label>
+                    <select class="form-control" name="customer">
+                        <option value="">Select Customer</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if selected_customer == customer.id|stringformat:"s" %}selected{% endif %}>
+                                {{ customer.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <br>
+            <div class="text-center">
+                <button class="btn btn-primary" type="submit">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sales Report Table -->
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <div class="header-title">
+                    <h4 class="card-title">Basic Table</h4>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive mt-4">
+                    <table id="basic-table" class="table table-striped mb-0" role="grid">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Unit</th>
+                                <th>Total Quantity Sold</th>
+                                <th>Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sales_data %}
+                                <tr>
+                                    <td>{{ item.item_name }}</td>
+                                    <td>{{ item.unit }}</td>
+                                    <td>{{ item.total_qty }}</td>
+                                    <td>{{ item.total_amount }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4">No sales data available for this period.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let supplierDropdown = document.querySelector("select[name='supplier']");
+        let customerDropdown = document.querySelector("select[name='customer']");
+    
+        customerDropdown.addEventListener("change", function () {
+            if (this.value) {
+                supplierDropdown.value = ""; // Clear supplier selection when customer is selected
+            }
+        });
+    
+        supplierDropdown.addEventListener("change", function () {
+            if (this.value) {
+                customerDropdown.value = ""; // Clear customer selection when supplier is selected
+            }
+        });
+    });
+    </script>
+    
+{% endblock %}

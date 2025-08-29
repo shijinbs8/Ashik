@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block active %}active{% endblock %}
+{% block content %}
+
+<div class="container mt-4">
+  <h2 class="text-center">Add New Product</h2>
+
+  <form method="post" class="shadow p-4 bg-white rounded">
+    {% csrf_token %}
+
+    <!-- Row 1: Name + Medicine Type + Unit -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Name:</label>
+        <input type="text" name="name" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Medicine Type:</label>
+        <select name="medicine_type" class="form-select" required>
+          {% for category in categories %}
+            <option value="{{ category.id }}">{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Unit:</label>
+        <select name="unit" class="form-select" required>
+          {% for unit in units %}
+            <option value="{{ unit.id }}">{{ unit.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Row 2: Tax Rate + MRP -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Tax Rate (₹):</label>
+        <input type="number" name="tax_rate" id="taxRate" class="form-control" step="0.01" readonly required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">MRP (₹):</label>
+        <input type="number" name="mrp" id="mrpInput" class="form-control" step="0.01" required>
+      </div>
+    </div>
+    <!-- Hidden tax percentage -->
+    <input type="hidden" id="taxPercentage" value="{{ tax.percentage }}">
+
+    <!-- Row 3: Cess + Wholesale + Retail + Supplier Rate -->
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label class="form-label">Cess (%):</label>
+        <input type="number" name="cess" class="form-control" step="0.01">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Wholesale Price:</label>
+        <input type="number" name="wholesale_price" class="form-control" step="0.01" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Retail Price:</label>
+        <input type="number" name="retail_price" class="form-control" step="0.01" required>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Supplier Rate:</label>
+        <input type="number" name="supplier_rate" class="form-control" step="0.01" required>
+      </div>
+    </div>
+
+    <!-- Row 4: Supplier -->
+    <div class="mb-3">
+      <label class="form-label">Supplier:</label>
+      <select name="supplier" class="form-select" required>
+        {% for supplier in suppliers %}
+          <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Row 5: HSN Code + Manufacturer Code + Bar Code -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">HSN Code:</label>
+        <select name="hsn_code" class="form-select" required>
+          {% for hsn in hsn_codes %}
+            <option value="{{ hsn.id }}">{{ hsn.code }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Manufacturer Code:</label>
+        <input type="text" name="manufacturer_code" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Bar Code:</label>
+        <input type="text" name="bar_code" class="form-control">
+      </div>
+    </div>
+
+    <!-- Row 6: Location + Stock Quantity -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Location:</label>
+        <input type="text" name="location" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Stock Quantity:</label>
+        <input type="number" name="stock_quantity" class="form-control" required>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 mt-4">Add Product</button>
+  </form>
+</div>
+
+<!-- Script to auto-calc Tax Rate based on MRP -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const mrpInput = document.getElementById("mrpInput");
+  const taxRateInput = document.getElementById("taxRate");
+  const taxPercentage = parseFloat(document.getElementById("taxPercentage").value) || 0;
+
+  mrpInput.addEventListener("input", function () {
+    const mrp = parseFloat(this.value) || 0;
+    const taxAmount = (mrp * taxPercentage) / 100;
+    taxRateInput.value = taxAmount.toFixed(2);
+  });
+});
+</script>
+
+{% endblock %}

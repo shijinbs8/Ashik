@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Sales Invoices</h2>
+
+
+
+<div class="row">
+    <div class="col-sm-12">
+       <div class="card">
+          <div class="card-header d-flex justify-content-between">
+             <div class="header-title">
+                <h4 class="card-title">Basic Table</h4>
+             </div>
+          </div>
+          <div class="card-body p-0">
+             <div class="table-responsive mt-4">
+                <table id="basic-table" class="table table-striped mb-0" role="grid">
+                   <thead>
+                    <tr>
+                        <th>Bill No</th>
+                        <th>Invoice No</th>
+                        <th>Customer/Supplier</th>
+                        <th>Billing Type</th>
+                        <th>Date</th>
+                        <th>Cashier</th>
+                        <th>Subtotal</th>
+                       
+                        <th>Actions</th>
+                        <th>Print</th>
+                    </tr>
+                   </thead>
+                   <tbody>
+                    {% for invoice in page_obj %}
+                    <tr>
+                        <td>{{ invoice.bill_no }}</td>
+                        <td>{{ invoice.invoice_no }}</td>
+                        <td>
+                            {% if invoice.customer %}
+                                {{ invoice.customer.name }}
+                            {% else %}
+                                {{ invoice.supplier.name }}
+                            {% endif %}
+                        </td>
+                        <td>{{ invoice.get_billing_type_display }}</td>
+                        <td>{{ invoice.invoice_date|date:"Y-m-d H:i" }}</td>
+                        <td>{{ invoice.cashier }}</td>
+            
+                        {% comment %}
+                        Calculate totals directly from related SalesItems
+                        {% endcomment %}
+                    <td>{{ invoice.total_amount|default:0 }}</td>  {# Show 0 if None #}
+
+                       
+            
+                        <td>
+                            <a href="{% url 'invoice_detail' invoice.bill_no %}">View</a>
+                        </td>
+                        <td>
+                            <a href="{% url 'print_invoice' invoice.bill_no %}">View PDF</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+            
+                   </tbody>
+                </table>
+             </div>
+          </div>
+       </div>
+    </div>
+ </div>
+
+
+
+
+
+
+
+
+
+
+<!-- Pagination Links -->
+<div>
+    {% if page_obj.has_previous %}
+        <a href="?page=1">First</a>
+        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+    {% endif %}
+</div>
+
+{% endblock %}

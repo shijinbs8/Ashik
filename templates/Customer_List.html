@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <div class="header-title">
+                    <h4 class="card-title">Customer List</h4>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive mt-4">
+                    <table id="basic-table" class="table table-striped mb-0" role="grid">
+                        <thead>
+                            <tr><th>Id</th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Email</th>
+                                <th>Address</th>
+                                <th>Bank Account Number</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for i in customer %}
+                            <tr>
+
+<td>{{i.id}}</td>
+                                <td>{{i.name}}</td>
+                                <td>{{i.contact}}</td>
+                                <td>{{i.email}}</td>
+                                <td>{{i.address}}</td>
+                                <td>{{i.bank_account.account_number}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

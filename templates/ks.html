@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Title</title>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
+  #loading {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 99;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .spinner {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+<div id="loading">
+  <div class="spinner"></div>
+</div>
+
+<!-- Content of the page -->
+<div style="padding: 20px;">
+  <h1>Welcome to Our Website</h1>
+  <p>This is a sample paragraph to show how the loading spinner works in Django or any other HTML page. Adjust the content as needed for your project.</p>
+</div>
+
+<script>
+    // Set a flag to indicate whether the page has loaded
+    var pageHasLoaded = false;
+  
+    window.onload = function() {
+      pageHasLoaded = true;
+      hideLoaderIfReady();
+    };
+  
+    // Function to hide the loader if the page has loaded and 2 seconds have passed
+    function hideLoaderIfReady() {
+      if (pageHasLoaded) {
+        setTimeout(function() {
+          document.getElementById('loading').style.display = 'none';
+        }, 2000); // Ensures that the loader is displayed for at least 2 seconds
+      }
+    }
+  
+    // Also set a timeout to check if 2 seconds have passed and the page has loaded
+    setTimeout(function() {
+      pageHasLoaded = true;
+      hideLoaderIfReady();
+    }, 2000);
+  </script>
+  
+</body>
+</html>

@@ -1,0 +1,291 @@
+
+{% extends 'base.html' %}
+{% block content %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales Invoice</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+    body { font-family: Arial, sans-serif; }
+    .table th, .table td { text-align: center; vertical-align: middle; }
+    .invoice-card { max-width: 1200px; margin: auto; }
+</style>
+
+<div class="container mt-4">
+    <div class="card invoice-card">
+        <div class="card-body">
+            <h4 class="mb-3 text-center">Sales Invoice</h4>
+            <div class="invoice-title">
+                <h4 class="float-end font-size-15">Invoice #DS0204
+                    <span class="badge bg-success font-size-12 ms-2">Billing</span>
+                </h4>
+                <div class="mb-4">
+                   <h2 class="mb-1 text-muted">{{ user.username }}!</h2>
+                </div>
+                <div class="text-muted">
+                    <p class="mb-1">1234 Main Street, Your City</p>
+                    <p class="mb-1"><i class="fas fa-envelope me-1"></i> store@email.com</p>
+                    <p><i class="fas fa-phone me-1"></i> +123 456 7890</p>
+                </div>
+            </div>
+
+            <!-- Form starts here -->
+            <form method="POST" action="{% url 'add_sales_invoice' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label"><strong>Billing To:</strong></label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="billingTo" id="billingCustomer" value="customer" checked>
+                        <label class="form-check-label" for="billingCustomer">Customer</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="billingTo" id="billingSupplier" value="supplier">
+                        <label class="form-check-label" for="billingSupplier">Supplier</label>
+                    </div>
+                </div>
+                <div class="mb-3" id="customerSection">
+                    <label for="customerSelect" class="form-label"><strong>Select Customer:</strong></label>
+                    <select class="form-select" id="customerSelect" name="customer">
+                        <option value="">Select Customer</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" data-address="{{ customer.address }}">{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3" id="supplierSection" style="display: none;">
+                    <label for="supplierSelect" class="form-label"><strong>Select Supplier:</strong></label>
+                    <select class="form-select" id="supplierSelect" name="supplier">
+                        <option value="">Select Supplier</option>
+                        {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}" data-address="{{ supplier.address }}">{{ supplier.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="billingAddress" class="form-label"><strong>Billing Address:</strong></label>
+                    <textarea class="form-control" id="billingAddress" name="billing_address" rows="3" placeholder="Enter billing address" readonly></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label"><strong>Billing Type:</strong></label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="billingType" id="billingWholesale" value="wholesale" checked>
+                        <label class="form-check-label" for="billingWholesale">Wholesale</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="billingType" id="billingRetail" value="retail">
+                        <label class="form-check-label" for="billingRetail">Retail</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="billingType" id="billingMRP" value="mrp">
+                        <label class="form-check-label" for="billingMRP">MRP</label>
+                    </div>
+                </div>
+                <table class="table table-bordered" id="invoiceTable">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Medicine Name</th>
+                            <th>Type</th>
+                            <th>Unit</th>
+                            <th>MRP</th>
+                            <th>Stock Qty</th>
+                            <th>Quantity</th>
+                            <th>Total MRP</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceBody">
+                        <tr>
+                            <td>1</td>
+                            <td>
+                                <select class="form-select productDropdown" name="item_name[]">
+                                    <option value="">Select Medicine</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}">{{ product.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td><input type="text" class="form-control medicine_type" name="medicine_type[]" readonly></td>
+                            <td><input type="text" class="form-control unit" name="unit[]" readonly></td>
+                            <td><input type="number" class="form-control mrp" name="mrp[]" readonly></td>
+                            <td><input type="number" class="form-control stock_quantity" readonly></td>
+                            <td><input type="number" class="form-control quantity" name="qty[]" min="1" value="1"></td>
+                            <td><input type="number" class="form-control total_mrp" name="subtotal[]" readonly></td>
+                            <input type="hidden" name="discount_percentage[]" value="0">
+<input type="hidden" name="discount_amount[]" value="0">
+<input type="hidden" name="taxable_amount[]" class="taxable_amount" value="0">
+<input type="hidden" name="tax_percentage[]" class="tax_percentage" value="0">
+<input type="hidden" name="tax_amount[]" class="tax_amount" value="0">
+
+                            <td>
+                                <button type="button" class="btn btn-danger removeRow">X</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-primary" id="addRow">+ Add Medicine</button>
+                <div class="text-end mt-3">
+                    <div class="totals">
+                        <div><span>Subtotal:</span> <span id="subtotal">0.00</span></div>
+                        <div><span>GST + Cess:</span> <span id="gstTotal">0.00</span></div>
+                        <div><span>Round Off:</span> <span id="roundOff">0.00</span></div>
+                     
+                    </div>
+                    <div style="clear: both;"></div>
+                    <h5><strong>Grand Total: ₹<span id="grandTotal">0.00</span></strong></h5>
+                </div>
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success">Submit Invoice</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Toggle Customer/Supplier
+    $("input[name='billingTo']").change(function() {
+        if ($(this).val() === "customer") {
+            $("#customerSection").show();
+            $("#supplierSection").hide();
+            $("#supplierSelect").val("");
+        } else {
+            $("#customerSection").hide();
+            $("#supplierSection").show();
+            $("#customerSelect").val("");
+        }
+        $("#billingAddress").val("");
+    });
+
+    // Set Billing Address
+    $("#customerSelect").change(function() {
+        var addr = $(this).find("option:selected").data("address") || "";
+        $("#billingAddress").val(addr);
+    });
+    $("#supplierSelect").change(function() {
+        var addr = $(this).find("option:selected").data("address") || "";
+        $("#billingAddress").val(addr);
+    });
+
+    // Add new row
+    $("#addRow").click(function() {
+        var newRow = $("#invoiceBody tr:first").clone();
+        newRow.find("input").val("");
+        newRow.find(".quantity").val("1");
+        newRow.find(".total_mrp").val("0.00");
+        newRow.find(".productDropdown").val("");
+        // Remove hidden tax_rate/cess inputs if present
+        newRow.find(".tax_rate, .cess").remove();
+        newRow.find("td:first").text($("#invoiceBody tr").length + 1);
+        $("#invoiceBody").append(newRow);
+    });
+
+    // Remove row
+    $(document).on("click", ".removeRow", function() {
+        $(this).closest("tr").remove();
+        updateRowNumbers();
+        calculateGrandTotal();
+    });
+
+    function updateRowNumbers() {
+        $("#invoiceBody tr").each(function(idx) {
+            $(this).find("td:first").text(idx + 1);
+        });
+    }
+
+    // Fetch product details on product change
+    $(document).on("change", ".productDropdown", function() {
+        var row = $(this).closest("tr");
+        var productId = $(this).val();
+        if (productId) {
+            $.ajax({
+                url: "/Product/get-product-details/" + productId + "/",
+                type: "GET",
+                dataType: "json",
+                success: function(data) {
+                    row.find(".medicine_type").val(data.medicine_type);
+                    row.find(".unit").val(data.unit);
+                    row.find(".mrp").val(data.mrp);
+                    row.find(".stock_quantity").val(data.stock_quantity);
+
+                    // Attach hidden GST + Cess fields
+                    if (row.find(".tax_rate").length === 0) {
+                        row.append('<input type="hidden" class="tax_rate" value="'+data.tax_rate+'">');
+                        row.append('<input type="hidden" class="cess" value="'+(data.cess || 0)+'">');
+                    } else {
+                        row.find(".tax_rate").val(data.tax_rate);
+                        row.find(".cess").val(data.cess || 0);
+                    }
+                    updateTotal(row);
+                },
+                error: function(xhr, status, error) {
+                    row.find("input").val("");
+                    updateTotal(row);
+                }
+            });
+        } else {
+            row.find("input").val("");
+            updateTotal(row);
+        }
+    });
+
+    // Change MRP when billing type changes
+    $('input[name="billingType"]').change(function() {
+        var selectedType = $('input[name="billingType"]:checked').val();
+        $(".productDropdown").each(function() {
+            var productId = $(this).val();
+            var priceField = $(this).closest("tr").find(".mrp");
+            if (productId) {
+                $.ajax({
+                    url: `/Product/get-product-price/${productId}/`,
+                    type: "GET",
+                    data: { billingType: selectedType },
+                    success: function(response) {
+                        priceField.val(response.price);
+                        updateTotal(priceField.closest("tr"));
+                    }
+                });
+            }
+        });
+    });
+
+    // Update line total on quantity or MRP change
+    $(document).on("input", ".quantity, .mrp", function() {
+        updateTotal($(this).closest("tr"));
+    });
+
+    function updateTotal(row) {
+        var mrp = parseFloat(row.find(".mrp").val()) || 0;
+        var quantity = parseInt(row.find(".quantity").val()) || 1;
+        var totalMrp = mrp * quantity;
+        row.find(".total_mrp").val(totalMrp.toFixed(2));
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        var subtotal = 0, gstTotal = 0, cessTotal = 0;
+        $("#invoiceBody tr").each(function() {
+            var row = $(this);
+            var totalMrp = parseFloat(row.find(".total_mrp").val()) || 0;
+            var gstPercentage = parseFloat(row.find(".tax_rate").val()) || 0;
+            var cess = parseFloat(row.find(".cess").val()) || 0;
+            var taxableAmount = totalMrp / (1 + (gstPercentage + cess) / 100);
+            var gstAmount = taxableAmount * (gstPercentage / 100);
+            var cessAmount = taxableAmount * (cess / 100);
+            subtotal += taxableAmount;
+            gstTotal += gstAmount;
+            cessTotal += cessAmount;
+        });
+        var grandTotal = subtotal + gstTotal + cessTotal;
+        var roundedGrandTotal = Math.round(grandTotal);
+        var roundOff = roundedGrandTotal - grandTotal;
+        $("#subtotal").text(subtotal.toFixed(2));
+        $("#gstTotal").text((gstTotal + cessTotal).toFixed(2));
+        $("#roundOff").text(roundOff.toFixed(2));
+        $("#grandTotal").text(roundedGrandTotal.toFixed(2));
+    }
+});
+</script>
+{% endblock %}
