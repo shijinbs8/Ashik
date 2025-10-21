@@ -48,7 +48,7 @@
                         {% comment %}
                         Calculate totals directly from related SalesItems
                         {% endcomment %}
-                    <td>{{ invoice.total_amount|default:0 }}</td>  {# Show 0 if None #}
+                    <td>{{ invoice.total_amount|floatformat:2  }}</td>  {# Show 0 if None #}
 
                        
             

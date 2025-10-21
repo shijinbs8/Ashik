@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% block active %}active{% endblock %}
 {% block content %}
 
 
@@ -47,6 +48,7 @@
             <th class="text-center">Quantity</th>
             <th class="text-center">Unit</th>
             <th class="text-center">Price</th>
+            <th class="text-center">Tax Amount</th>
             <th class="text-center">Total</th>
         </tr>
     </thead>
@@ -57,19 +59,39 @@
             <td class="text-center">{{ item.qty }}</td>
             <td class="text-center">{{ item.unit }}</td>
             <td class="text-center">{{ item.price }}</td>
+            <td class="text-center">{{ item.tax_amount }}</td>
+
             <td class="text-center total-amount">{{ item.total_amount }}</td>
         </tr>
         {% endfor %}
         <tr>
-            
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">
+                <h6 class="mb-0"><b>Total (Without Tax)</b></h6>
+            </td>
+            <td class="text-center">₹ {{ total_without_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center"></td>
+            <td class="text-center">
+                <h6 class="mb-0"><b>Total Tax</b></h6>
+            </td>
+            <td class="text-center">₹ {{ total_tax|floatformat:2 }}</td>
+        </tr>
+        <tr>
             <td class="text-center"></td>
             <td class="text-center"></td>
             <td class="text-center"></td>
             <td class="text-center">
                 <h6 class="mb-0"><b>Grand Total</b></h6>
             </td>
-            <td class="text-center" id="total-sum">₹ 0.00</td>
+            <td class="text-center">₹ {{ grand_total|floatformat:2 }}</td>
         </tr>
+        
     </tbody>
 </table>
 

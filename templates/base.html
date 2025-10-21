@@ -5,6 +5,18 @@
     <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
       <title>Asture</title>
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+  <style>
+    .gradient-text {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 28px; /* adjust as you like */
+      background: linear-gradient(45deg, #ff6ec4, #7873f5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+  </style>
       
       <!-- Favicon -->
       <link rel="shortcut icon" href="{% static 'images/favicon.ico' %}">
@@ -48,7 +60,8 @@
                 <!--Logo start-->
                 <div class="logo-main">
                     <div class="logo-normal">
-                        <img src="{% static 'images/Asture1.png' %}" class="logo-title" style="height: 70px;width:auto;" alt="fb">
+                      <h5 class="logo-title gradient-text">Asture Elevate</h5>
+                        {% comment %} <img src="{% static 'images/Asture1.png' %}" class="logo-title" style="height: 70px;width:auto;" alt="fb"> {% endcomment %}
                     </div>
                     
                 </div>

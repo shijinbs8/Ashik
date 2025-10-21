@@ -212,6 +212,8 @@ class RestockHistory(models.Model):
 from django.db import models
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+
 
 class SalesInvoice(models.Model):
     bill_no = models.AutoField(primary_key=True)
@@ -230,7 +232,7 @@ class SalesInvoice(models.Model):
         ('mrp', 'MRP'),
     ], default='mrp')
 
-    # ✅ Snapshot totals
+  
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     gst_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     round_off = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -260,6 +262,24 @@ class SalesInvoice(models.Model):
 
     def get_grand_total(self):
         return sum(item.total_amount for item in self.items.all())
+    def get_subtotal(self):
+        return self.items.aggregate(
+            subtotal=Sum(F("price") * F("qty"), output_field=DecimalField())
+        )["subtotal"] or 0
+
+    def get_gst_total(self):
+        return self.items.aggregate(
+            gst=Sum("tax_amount", output_field=DecimalField())
+        )["gst"] or 0
+
+    def get_total_without_gst(self):
+        return self.get_subtotal()
+
+    def get_total_with_gst(self):
+        return self.get_subtotal() + self.get_gst_total()
+
+    def get_grand_total(self):
+        return round(self.get_total_with_gst() + self.round_off, 2)
 
 
 class SalesItem(models.Model):
@@ -297,10 +317,15 @@ class Cashier(models.Model):
     def __str__(self):
         return self.name
 
+from django.db import models
 
 class Tax(models.Model):
     name = models.CharField(max_length=50)  # e.g., GST 5%, GST 18%
     percentage = models.DecimalField(max_digits=5, decimal_places=2)  # e.g., 5.00, 18.00
+
+    # Add wholesale and retail margins (stored as percentages of MRP)
+    wholesale_margin = models.DecimalField(max_digits=5, decimal_places=2, default=70.00)  # e.g., 70%
+    retail_margin = models.DecimalField(max_digits=5, decimal_places=2, default=80.00)      # e.g., 80%
 
     def __str__(self):
         return f"{self.name} ({self.percentage}%)"

@@ -112,31 +112,51 @@
         <div class="card w-100">
             <div class="card-header d-flex justify-content-between">
                 <div class="header-title">
-                    <h4 class="card-title">Add Tax</h4>
+                    <h4 class="card-title">Add / Update Tax</h4>
                 </div>
             </div>
             <div class="card-body">
                 <form method="post" action="{% url 'Add_Tax' %}">
                     {% csrf_token %}
-                    
+    
                     <!-- Tax Name -->
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <label class="form-label" for="tax_name">Tax Name</label>
-                        <input type="text" class="form-control" name="tax_name" id="tax_name" placeholder="{{tax.name}}" required>
+                        <input type="text" class="form-control" name="tax_name" id="tax_name"
+                               value="{{ tax.name }}" placeholder="Enter Tax Name" required>
                     </div>
-                    
+    
                     <!-- Tax Percentage -->
-                    <div class="form-group">
+                    <div class="form-group mb-3">
                         <label class="form-label" for="tax_percentage">Tax Percentage (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" class="form-control" name="tax_percentage" id="tax_percentage" value="" placeholder="{{tax.percentage}}" required>
+                        <input type="number" step="0.01" min="0" max="100"
+                               class="form-control" name="tax_percentage" id="tax_percentage"
+                               value="{{ tax.percentage }}" placeholder="e.g. 18.00" required>
+                    </div>
+    
+                    <!-- Wholesale Margin -->
+                    <div class="form-group mb-3">
+                        <label class="form-label" for="wholesale_margin">Wholesale Margin (%)</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                               class="form-control" name="wholesale_margin" id="wholesale_margin"
+                               value="{{ tax.wholesale_margin }}" placeholder="e.g. 70.00" required>
+                    </div>
+    
+                    <!-- Retail Margin -->
+                    <div class="form-group mb-3">
+                        <label class="form-label" for="retail_margin">Retail Margin (%)</label>
+                        <input type="number" step="0.01" min="0" max="100"
+                               class="form-control" name="retail_margin" id="retail_margin"
+                               value="{{ tax.retail_margin }}" placeholder="e.g. 80.00" required>
                     </div>
     
                     <!-- Submit -->
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="btn btn-primary">Save Tax Settings</button>
                 </form>
             </div>
         </div>
     </div>
+    
 </div>
 
 <div class="row d-flex align-items-stretch">

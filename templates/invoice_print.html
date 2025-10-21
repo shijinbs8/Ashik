@@ -68,8 +68,29 @@
         <div class="header">
             <h2>HEALTHON PHARMACEUTICALS</h2>
             <p>GSTIN: 32APUAS1872J1ZI</p>
-            <p>Invoice No: {{ invoice.bill_no }} | Date: {{ invoice.date|date:"d-m-Y" }}</p>
+            <p>Invoice No: {{ invoice.bill_no }} | Date: {{ invoice.invoice_date|date:"d-m-Y" }}</p>
         </div>
+<!-- Party Info -->
+<div style="margin: 5px 0; font-size: 11px; text-align:left;">
+    {% if invoice.customer %}
+        <p><b>Customer:</b> {{ invoice.customer.name }}</p>
+        <p><b>Address:</b> {{ invoice.customer.address }}</p>
+        <p><b>District:</b> {{ invoice.customer.district }}</p>
+        <p><b>State:</b> {{ invoice.customer.state }}</p>
+        {% if invoice.customer.gstin %}
+            <p><b>GSTIN:</b> {{ invoice.customer.gstin }}</p>
+        {% endif %}
+        {% if invoice.customer.contact %}
+            <p><b>Phone:</b> {{ invoice.customer.contact }}</p>
+        {% endif %}
+    {% elif invoice.supplier %}
+        <p><b>Supplier:</b> {{ invoice.supplier.name }}</p>
+        <p><b>Address:</b> {{ invoice.supplier.address }}</p>
+        {% if invoice.supplier.contact_info %}
+            <p><b>Contact Info:</b> {{ invoice.supplier.contact_info }}</p>
+        {% endif %}
+    {% endif %}
+</div>
 
         <!-- Items Table -->
         <table>
@@ -111,11 +132,14 @@
 
         <!-- Totals -->
         <div class="totals">
-            <p><b>Subtotal:</b> {{ invoice.total_amount }}</p>
-            <p><b>GST:</b> {{ invoice.get_gst_total }}</p>
-            <p><b>Round Off:</b> {{ invoice.round_off }}</p>
-            <h3>Total: ₹ {{ invoice.get_grand_total }}</h3>
+            <p><b>Subtotal (Without GST):</b> ₹ {{ invoice.get_total_without_gst|floatformat:2 }}</p>
+            <p><b>GST Total:</b> ₹ {{ invoice.get_gst_total|floatformat:2 }}</p>
+            <p><b>Total (With GST):</b> ₹ {{ invoice.get_total_with_gst|floatformat:2 }}</p>
+            <p><b>Round Off:</b> ₹ {{ invoice.round_off|floatformat:2 }}</p>
+            <h3>Grand Total: ₹ {{ invoice.get_grand_total|floatformat:2 }}</h3>
         </div>
+        
+        
     </div>
 </body>
 </html>

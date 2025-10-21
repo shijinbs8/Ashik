@@ -32,19 +32,22 @@
       </div>
     </div>
 
-    <!-- Row 2: Tax Rate + MRP -->
+    <!-- Row 2: Tax Percentage + MRP -->
     <div class="row mb-3">
       <div class="col-md-6">
-        <label class="form-label">Tax Rate (₹):</label>
-        <input type="number" name="tax_rate" id="taxRate" class="form-control" step="0.01" readonly required>
+        <label class="form-label">Tax Percentage (%):</label>
+        <input type="number" id="taxPercentageInput" name="tax_rate" class="form-control" value="{{ tax.percentage }}" readonly required>
+        <small class="text-muted" id="taxAmountInfo">Tax Amount: ₹0.00</small>
       </div>
       <div class="col-md-6">
         <label class="form-label">MRP (₹):</label>
         <input type="number" name="mrp" id="mrpInput" class="form-control" step="0.01" required>
       </div>
     </div>
-    <!-- Hidden tax percentage -->
-    <input type="hidden" id="taxPercentage" value="{{ tax.percentage }}">
+
+    <!-- Hidden margins -->
+    <input type="hidden" id="wholesaleMargin" value="{{ tax.wholesale_margin }}">
+    <input type="hidden" id="retailMargin" value="{{ tax.retail_margin }}">
 
     <!-- Row 3: Cess + Wholesale + Retail + Supplier Rate -->
     <div class="row mb-3">
@@ -53,15 +56,17 @@
         <input type="number" name="cess" class="form-control" step="0.01">
       </div>
       <div class="col-md-3">
-        <label class="form-label">Wholesale Price:</label>
-        <input type="number" name="wholesale_price" class="form-control" step="0.01" required>
+        <label class="form-label">Wholesale Price (₹):</label>
+        <input type="number" name="wholesale_price" id="wholesalePrice" class="form-control" step="0.01" readonly required>
+        <small class="text-muted" id="wholesaleInfo"></small>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Retail Price:</label>
-        <input type="number" name="retail_price" class="form-control" step="0.01" required>
+        <label class="form-label">Retail Price (₹):</label>
+        <input type="number" name="retail_price" id="retailPrice" class="form-control" step="0.01" readonly required>
+        <small class="text-muted" id="retailInfo"></small>
       </div>
       <div class="col-md-3">
-        <label class="form-label">Supplier Rate:</label>
+        <label class="form-label">Supplier Rate (₹):</label>
         <input type="number" name="supplier_rate" class="form-control" step="0.01" required>
       </div>
     </div>
@@ -112,19 +117,45 @@
   </form>
 </div>
 
-<!-- Script to auto-calc Tax Rate based on MRP -->
+<!-- Script to auto-calc Tax, Wholesale, Retail -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const mrpInput = document.getElementById("mrpInput");
-  const taxRateInput = document.getElementById("taxRate");
-  const taxPercentage = parseFloat(document.getElementById("taxPercentage").value) || 0;
+  document.addEventListener("DOMContentLoaded", function () {
+    const mrpInput = document.getElementById("mrpInput");
+    const taxPercentageInput = document.getElementById("taxPercentageInput");
+    const taxAmountInfo = document.getElementById("taxAmountInfo");
+    const wholesalePriceInput = document.getElementById("wholesalePrice");
+    const retailPriceInput = document.getElementById("retailPrice");
+    const wholesaleInfo = document.getElementById("wholesaleInfo");
+    const retailInfo = document.getElementById("retailInfo");
 
-  mrpInput.addEventListener("input", function () {
-    const mrp = parseFloat(this.value) || 0;
-    const taxAmount = (mrp * taxPercentage) / 100;
-    taxRateInput.value = taxAmount.toFixed(2);
+    const taxPercentage = parseFloat(taxPercentageInput.value) || 0;
+    const wholesaleMargin = parseFloat(document.getElementById("wholesaleMargin").value) || 0;
+    const retailMargin = parseFloat(document.getElementById("retailMargin").value) || 0;
+
+    mrpInput.addEventListener("input", function () {
+      const mrp = parseFloat(this.value) || 0;
+
+      // Tax amount based on MRP
+      const taxAmount = (mrp * taxPercentage) / 100;
+      taxAmountInfo.textContent = `Tax Amount: ₹${taxAmount.toFixed(2)}`;
+
+      // Wholesale and Retail WITHOUT tax
+      const wholesaleWithoutTax = (mrp * wholesaleMargin) / 100;
+      const retailWithoutTax = (mrp * retailMargin) / 100;
+
+      // Tax-inclusive prices (for info)
+      const wholesaleWithTax = wholesaleWithoutTax + (wholesaleWithoutTax * taxPercentage / 100);
+      const retailWithTax = retailWithoutTax + (retailWithoutTax * taxPercentage / 100);
+
+      // Fill inputs with prices WITHOUT tax
+      wholesalePriceInput.value = wholesaleWithoutTax.toFixed(2);
+      retailPriceInput.value = retailWithoutTax.toFixed(2);
+
+      // Show tax-inclusive prices in info labels
+      wholesaleInfo.textContent = `(With tax: ₹${wholesaleWithTax.toFixed(2)})`;
+      retailInfo.textContent = `(With tax: ₹${retailWithTax.toFixed(2)})`;
+    });
   });
-});
 </script>
 
 {% endblock %}

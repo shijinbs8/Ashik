@@ -59,22 +59,28 @@ def Add_Supplier(request):
         else:
             print('NO Data')
     return redirect('Product_Settings')  
-
 def Add_Tax(request):
     if request.method == "POST":
-        tax_name = request.POST.get('tax_name')
-        tax_rate = request.POST.get('tax_percentage')
-  
-        if tax_name and tax_rate:
-            # Always update or create the single tax entry
-            Tax.objects.update_or_create(
-                id=1,  # Force ID = 1 always
-                defaults={'name': tax_name, 'percentage': tax_rate}
-            )
-        else:
-            print('NO Data')
-    return redirect('Product_Settings')
+        tax_name = request.POST.get("tax_name")
+        tax_percentage = request.POST.get("tax_percentage")
+        wholesale_margin = request.POST.get("wholesale_margin")
+        retail_margin = request.POST.get("retail_margin")
 
+        if tax_name and tax_percentage:
+            Tax.objects.update_or_create(
+                id=1,  # Keep a single global Tax record
+                defaults={
+                    "name": tax_name,
+                    "percentage": tax_percentage,
+                    "wholesale_margin": wholesale_margin or 70,  # default fallback
+                    "retail_margin": retail_margin or 80,        # default fallback
+                }
+            )
+            messages.success(request, "Tax settings updated successfully!")
+        else:
+            messages.error(request, "Please fill in all required fields.")
+
+    return redirect("Product_Settings")
 
 def Delete_Category(request,id):
     data=get_object_or_404(Category,id=id)
@@ -89,63 +95,95 @@ def Delete_Hsn(request,id):
 
 
 
+from decimal import Decimal, InvalidOperation
+from django.db import transaction
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from .models import Product, Category, Unit, Supplier, HSNCode, Tax
 
 
+@transaction.atomic
 def Add_Product(request):
-
-
     if request.method == "POST":
-        name = request.POST.get("name")
-        medicine_type_id = request.POST.get("medicine_type")
-        unit_id = request.POST.get("unit")
-        tax_rate = request.POST.get("tax_rate")
-        cess = request.POST.get("cess") or None  # Handle nullable field
-        mrp = request.POST.get("mrp")
-        wholesale_price = request.POST.get("wholesale_price")
-        retail_price = request.POST.get("retail_price")
-        supplier_id = request.POST.get("supplier")
-        hsn_code_id = request.POST.get("hsn_code")
-        manufacturer_code = request.POST.get("manufacturer_code")
-        bar_code = request.POST.get("bar_code")
-        location = request.POST.get("location")
-        stock_quantity = request.POST.get("stock_quantity")
-        supplier_rate = request.POST.get("supplier_rate")
+        try:
+            # Extract raw data
+            name = request.POST.get("name")
+            medicine_type_id = request.POST.get("medicine_type")
+            unit_id = request.POST.get("unit")
+            tax_rate_input = request.POST.get("tax_rate")
+            cess_input = request.POST.get("cess") or None
+            mrp_input = request.POST.get("mrp")
+            wholesale_price_input = request.POST.get("wholesale_price")
+            retail_price_input = request.POST.get("retail_price")
+            supplier_id = request.POST.get("supplier")
+            hsn_code_id = request.POST.get("hsn_code")
+            manufacturer_code = request.POST.get("manufacturer_code")
+            bar_code = request.POST.get("bar_code")
+            location = request.POST.get("location")
+            stock_quantity_input = request.POST.get("stock_quantity")
+            supplier_rate_input = request.POST.get("supplier_rate")
 
-        # Ensure IDs exist before saving
-        medicine_type = Category.objects.get(id=medicine_type_id)
-        unit = Unit.objects.get(id=unit_id)
-        supplier = Supplier.objects.get(id=supplier_id)
-        hsn_code = HSNCode.objects.get(id=hsn_code_id)
+            # Convert decimals safely
+            try:
+                tax_rate = Decimal(tax_rate_input or "0.00")
+                cess = Decimal(cess_input) if cess_input else None
+                mrp = Decimal(mrp_input or "0.00")
+                wholesale_price = Decimal(wholesale_price_input or "0.00")
+                retail_price = Decimal(retail_price_input or "0.00")
+                supplier_rate = Decimal(supplier_rate_input or "0.00")
+            except InvalidOperation:
+                messages.error(request, "Invalid number format in prices or tax fields.")
+                return redirect("Add_Product")
 
-        # Create product
-        product = Product.objects.create(
-            name=name,
-            medicine_type=medicine_type,
-            unit=unit,
-            tax_rate=tax_rate,
-            cess=cess,
-            mrp=mrp,
-            wholesale_price=wholesale_price,
-            retail_price=retail_price,
-            supplier=supplier,
-            hsn_code=hsn_code,
-            manufacturer_code=manufacturer_code,
-            bar_code=bar_code,
-            location=location,
-            stock_quantity=stock_quantity,
-            supplier_rate=supplier_rate,
-            total_stock_added=stock_quantity,  # Initialize stock tracking
-            total_stock_cost=float(supplier_rate) * int(stock_quantity),
-        )
+            # Convert stock safely
+            try:
+                stock_quantity = int(stock_quantity_input or 0)
+            except ValueError:
+                messages.error(request, "Stock quantity must be an integer.")
+                return redirect("Add_Product")
 
-        messages.success(request, "Product added successfully!")
-        return redirect("Add_Product")  # Redirect to the same page after adding
+            # Fetch related objects safely
+            medicine_type = get_object_or_404(Category, id=medicine_type_id)
+            unit = get_object_or_404(Unit, id=unit_id)
+            supplier = get_object_or_404(Supplier, id=supplier_id)
+            hsn_code = get_object_or_404(HSNCode, id=hsn_code_id)
 
+            # Create product inside atomic transaction
+            Product.objects.create(
+                name=name,
+                medicine_type=medicine_type,
+                unit=unit,
+                tax_rate=tax_rate,   # Stored as percentage
+                cess=cess,
+                mrp=mrp,
+                wholesale_price=wholesale_price,
+                retail_price=retail_price,
+                supplier=supplier,
+                hsn_code=hsn_code,
+                manufacturer_code=manufacturer_code,
+                bar_code=bar_code,
+                location=location,
+                stock_quantity=stock_quantity,
+                supplier_rate=supplier_rate,
+                total_stock_added=stock_quantity,
+                total_stock_cost=supplier_rate * stock_quantity,
+            )
+
+            messages.success(request, f"Product '{name}' added successfully!")
+            return redirect("Add_Product")
+
+        except Exception as e:
+            # Rollback will happen automatically due to @transaction.atomic
+            messages.error(request, f"Error adding product: {str(e)}")
+            return redirect("Add_Product")
+
+    # GET request → load form
     categories = Category.objects.all()
     units = Unit.objects.all()
     suppliers = Supplier.objects.all()
     hsn_codes = HSNCode.objects.all()
-    tax=Tax.objects.get(id=1) 
+    tax = Tax.objects.first()  # fallback if you have only one tax setup
+
     return render(
         request,
         "Add_Product.html",
@@ -155,7 +193,6 @@ def Add_Product(request):
             "suppliers": suppliers,
             "hsn_codes": hsn_codes,
             "tax": tax,
-          
         },
     )
 
@@ -177,6 +214,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+
+@login_required
 @csrf_exempt
 def restock_medicine(request):
     if request.method == "POST":
@@ -189,7 +229,7 @@ def restock_medicine(request):
             supplier_id = data.get("supplier_id")  # Supplier ID from frontend
 
             # Fetch restocker (User)
-            restocked_by = User.objects.get(id=restocked_by_id)
+            restocked_by = request.user
 
             # Fetch supplier
             supplier = Supplier.objects.get(id=supplier_id)
@@ -389,6 +429,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from .models import SalesInvoice, SalesItem, Product, Customer, Supplier
 from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
+
+
+@transaction.atomic
 def add_sales_invoice(request):
     products = Product.objects.all()
     customers = Customer.objects.all()
@@ -414,7 +459,7 @@ def add_sales_invoice(request):
                 return redirect("add_sales_invoice")
 
             # Create invoice object first
-            invoice = SalesInvoice(
+            invoice = SalesInvoice.objects.create(
                 customer=customer if customer else None,
                 supplier=supplier if supplier else None,
                 cashier=request.POST.get("cashier"),
@@ -422,9 +467,7 @@ def add_sales_invoice(request):
                 is_interstate="interstate" in request.POST,
                 billing_type=billing_type,
             )
-            invoice.save()
 
-            # Process Sales Items and Reduce Stock
             items = []
             subtotal = Decimal("0.00")
             gst_total = Decimal("0.00")
@@ -432,9 +475,12 @@ def add_sales_invoice(request):
             item_ids = request.POST.getlist("item_name[]")
             qty_list = request.POST.getlist("qty[]")
             unit_list = request.POST.getlist("unit[]")
-            price_list = request.POST.getlist("mrp[]")
             discount_percentage_list = request.POST.getlist("discount_percentage[]")
             discount_amount_list = request.POST.getlist("discount_amount[]")
+
+            # Take tax from Tax model
+            tax = Tax.objects.first()
+            tax_percentage = tax.percentage if tax else Decimal("0.00")
 
             for i in range(len(item_ids)):
                 product = get_object_or_404(Product, id=item_ids[i])
@@ -444,22 +490,33 @@ def add_sales_invoice(request):
                     messages.error(request, f"Not enough stock for {product.name}. Available: {product.stock_quantity}, Requested: {qty}")
                     return redirect("add_sales_invoice")
 
-                price = Decimal(price_list[i]) if price_list[i] else Decimal("0.00")
+                # ✅ Take price from Product model depending on billing type
+                if billing_type.lower() == "mrp":
+                    price = product.mrp
+                elif billing_type.lower() == "wholesale":
+                    price = product.wholesale_price
+                else:
+                    price = product.retail_price
+
+                gross_total = price * qty
+
+                # Discount
                 discount_percentage = Decimal(discount_percentage_list[i]) if discount_percentage_list and discount_percentage_list[i] else Decimal("0.00")
                 discount_amount = Decimal(discount_amount_list[i]) if discount_amount_list and discount_amount_list[i] else Decimal("0.00")
 
-                # Calculate taxable amount (price * qty - discount)
-                raw_subtotal = price * qty
-                taxable_amount = raw_subtotal - discount_amount
+                if discount_percentage > 0:
+                    discount_amount = (gross_total * discount_percentage / 100).quantize(Decimal("0.01"))
 
-                # Fetch tax rate from Product model
-                tax_percentage = product.tax_rate if product.tax_rate else Decimal("0.00")
-                tax_amount = (taxable_amount * tax_percentage / Decimal("100.00")).quantize(Decimal("0.01"))
+                net_total = gross_total - discount_amount
 
-                # Add cess if applicable
-                cess_percentage = product.cess if product.cess else Decimal("0.00")
-                cess_amount = (taxable_amount * cess_percentage / Decimal("100.00")).quantize(Decimal("0.01")) if product.cess else Decimal("0.00")
-                total_tax_amount = tax_amount + cess_amount
+                # ✅ Tax calculation (no back calculation)
+                taxable_amount = net_total
+                gst_amount = (taxable_amount * tax_percentage / 100).quantize(Decimal("0.01"))
+                cess_percentage = product.cess or Decimal("0.00")
+                cess_amount = (taxable_amount * cess_percentage / 100).quantize(Decimal("0.01")) if cess_percentage > 0 else Decimal("0.00")
+
+                total_tax_amount = gst_amount + cess_amount
+                total_amount = taxable_amount + total_tax_amount
 
                 subtotal += taxable_amount
                 gst_total += total_tax_amount
@@ -479,8 +536,8 @@ def add_sales_invoice(request):
                     taxable_amount=taxable_amount,
                     tax_percentage=tax_percentage,
                     tax_amount=total_tax_amount,
-                    total_amount=taxable_amount + total_tax_amount,
-                    mrp=price,
+                    total_amount=total_amount,
+                    mrp=product.mrp,
                 ))
 
                 # Reduce stock
@@ -488,7 +545,7 @@ def add_sales_invoice(request):
 
             SalesItem.objects.bulk_create(items)
 
-            # Totals
+            # ✅ Totals
             grand_total = subtotal + gst_total
             rounded_grand_total = grand_total.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
             round_off = rounded_grand_total - grand_total
@@ -511,6 +568,7 @@ def add_sales_invoice(request):
         "customers": customers,
         "suppliers": suppliers,
     })
+
 
 def get_product_price(request, product_id):
     product = get_object_or_404(Product, id=product_id)
@@ -540,6 +598,9 @@ def invoice_list(request):
 
     return render(request, "invoice_list.html", {"page_obj": page_obj})
 
+from django.shortcuts import render
+from django.http import JsonResponse
+from .models import SalesInvoice
 
 def invoice_detail(request, bill_no):
     invoice = SalesInvoice.objects.filter(bill_no=bill_no).first()  # Avoids 404 error
@@ -548,7 +609,20 @@ def invoice_detail(request, bill_no):
         return JsonResponse({"error": "Invoice not found"}, status=404)
 
     items = invoice.items.all()
-    return render(request, "invoice_detail.html", {"invoice": invoice, "items": items})
+
+    # Calculate totals
+    total_tax = sum(item.tax_amount for item in items)
+    grand_total = sum(item.total_amount for item in items)
+    total_without_tax = sum(item.total_amount - item.tax_amount for item in items)
+
+    context = {
+        "invoice": invoice,
+        "items": items,
+        "total_tax": total_tax,
+        "grand_total": grand_total,
+        "total_without_tax": total_without_tax,
+    }
+    return render(request, "invoice_detail.html", context)
 
 from django.db.models import Sum
 from datetime import datetime
